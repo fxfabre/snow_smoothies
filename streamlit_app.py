@@ -25,18 +25,18 @@ ingr_chosen = st.multiselect(
 )
 
 for ingr in ingr_chosen:
+    st.title(f"{ingr} Nutritional information")
     fruityvice_response = requests.get(f"https://fruityvice.com/api/fruit/{ingr}")
     df_fv = st.dataframe(fruityvice_response.json(), use_container_width=True)
 
 if ingr_chosen:
     ings = ' '.join(sorted(ingr_chosen))
-    st.write("options : " + ings)
 
     insert_stmt = f"""
         insert into smoothies.public.orders(INGREDIENTS, NAME_ON_ORDER)
         values ('{ings}', '{name_on_order}')
     """.strip()
-    st.write(insert_stmt)
+    # st.write(insert_stmt)
 
     do_insert = st.button("Submit order")
     if do_insert:
