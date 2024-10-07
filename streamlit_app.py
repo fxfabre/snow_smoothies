@@ -16,7 +16,8 @@ name_on_order = st.text_input("Your name")
 st.write(f"The name on your smoothie will be {name_on_order}")
 
 # Get the current credentials
-session = get_active_session()
+cnx = st.connection("snowflake")
+session = cnx.session()
 
 # list of fruits
 df_fuits = session.table("smoothies.public.fruit_options")
