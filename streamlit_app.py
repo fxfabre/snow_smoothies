@@ -1,14 +1,11 @@
-# Import python packages
+import requests
 import streamlit as st
 from snowflake.snowpark.functions import col
-from snowflake.snowpark.context import get_active_session
 
 #option = st.selectbox("Choose your favorite fruit :", ["aa", "bb"])
 #st.write("You selected:", option)
 #st.dataframe(data=df_fuits, use_container_width=True)
 
-
-# Write directly to the app
 st.title(":cup_with_straw: Customize your smoothie ! :cup_with_straw:")
 st.write("""Choose fruits you want""")
 
@@ -19,17 +16,20 @@ st.write(f"The name on your smoothie will be {name_on_order}")
 cnx = st.connection("snowflake")
 session = cnx.session()
 
-# list of fruits
+# List of fruits
 df_fuits = session.table("smoothies.public.fruit_options")
-
-options = st.multiselect(
+ingr_chosen = st.multiselect(
     "Select up to 5 ingrédients",
     df_fuits.select(col("FRUIT_NAME")),
     max_selections=5,
 )
 
-if options:
-    ings = ' '.join(sorted(options))
+for ingr in ingr_chosen:
+    fruityvice_response = requests.get(f"https://fruityvice.com/api/fruit/{ingr}")
+    df_fv = st.dataframe(fruityvice_response.json(), use_container_width=True)
+
+if ingr_chosen:
+    ings = ' '.join(sorted(ingr_chosen))
     st.write("options : " + ings)
 
     insert_stmt = f"""
@@ -42,6 +42,3 @@ if options:
     if do_insert:
         session.sql(insert_stmt).collect()
         st.success('Your Smoothie is ordered!', icon="✅")
-
-
-
