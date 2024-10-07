@@ -17,24 +17,29 @@ cnx = st.connection("snowflake")
 session = cnx.session()
 
 # List of fruits
-df_fuits = session.table("smoothies.public.fruit_options")
-ingr_chosen = st.multiselect(
+df_fuits = session.table("smoothies.public.fruit_options").to_pandas()
+fruits_chosen = st.multiselect(
     "Select up to 5 ingrédients",
-    df_fuits.select(col("FRUIT_NAME")),
+    df_fuits["FRUIT_NAME"].tolist(),
     max_selections=5,
 )
+search_on = df_fuits.set_index("FRUIT_NAME")["SEARCH_ON"].to_dict()
 
-for ingr in ingr_chosen:
-    st.title(f"{ingr} Nutritional information")
-    fruityvice_response = requests.get(f"https://fruityvice.com/api/fruit/{ingr}")
-    df_fv = st.dataframe(fruityvice_response.json(), use_container_width=True)
+# Display the nutritional information
+for fruit in fruits_chosen:
+    search_fruit = search_on[fruit]
+    fruityvice_response = requests.get(f"https://fruityvice.com/api/fruit/{search_fruit}")
 
-if ingr_chosen:
-    ings = ' '.join(sorted(ingr_chosen))
+    # Display dataframe
+    st.title(f"{fruit} Nutritional information")
+    st.dataframe(fruityvice_response.json(), use_container_width=True)
+
+if fruits_chosen:
+    fruits_to_insert = ' '.join(sorted(fruits_chosen))
 
     insert_stmt = f"""
         insert into smoothies.public.orders(INGREDIENTS, NAME_ON_ORDER)
-        values ('{ings}', '{name_on_order}')
+        values ('{fruits_to_insert}', '{name_on_order}')
     """.strip()
     # st.write(insert_stmt)
 
